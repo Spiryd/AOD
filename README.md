@@ -1,0 +1,2 @@
+# AOD
+Algorytmy Optymalizacji Dyskretnej
