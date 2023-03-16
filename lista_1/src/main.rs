@@ -18,6 +18,7 @@ struct Graph{
 
 impl Graph {
     fn dsf(&self) {
+        let mut visited: Vec<u32> = Vec::new();
         println!("{}", self.node_quantity);
         todo!()
     }
@@ -57,13 +58,22 @@ fn main() {
             .read_line(&mut edge)
             .expect("Failed to read line");
         edges.push(str_to_edge(edge.clone()));
+        edge = String::from("");
     } 
-    let graph = Graph {
-        directionality: Directionality::Directed,
-        node_quantity: node_quantity,
-        edges: edges
-    };
+    let graph: Graph;
+    if directionality == "D" {
+        graph = Graph {
+            directionality: Directionality::Directed,
+            node_quantity: node_quantity,
+            edges: edges
+        };
+    } else {
+        graph = Graph {
+            directionality: Directionality::Undirected,
+            node_quantity: node_quantity,
+            edges: edges
+        };
+    }
     println!("{:?}", graph);
-    graph.dsf();
     
 }
