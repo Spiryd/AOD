@@ -59,23 +59,45 @@ impl Graph {
     pub fn bfs(&self, _tree: bool){
         let mut visited: Vec<usize> = Vec::new();
         let mut traversal: Vec<usize> = Vec::new();
-
-        for i in 1..=self.node_quantity {
-            if !visited.contains(&i) {
-                let mut queue: VecDeque<usize> = VecDeque::new();
-                visited.push(i);
-                queue.push_back(i);
-                while !queue.is_empty() {
-                    let node = queue.pop_front().unwrap();
-                    traversal.push(node);
-                    for j in &self.adj[node-1] {
-                        if !visited.contains(j) {
-                            visited.push(j.clone());
-                            queue.push_back(j.clone())
+        if _tree == false{
+            for i in 1..=self.node_quantity {
+                if !visited.contains(&i) {
+                    let mut queue: VecDeque<usize> = VecDeque::new();
+                    visited.push(i);
+                    queue.push_back(i);
+                    while !queue.is_empty() {
+                        let node = queue.pop_front().unwrap();
+                        traversal.push(node);
+                        for j in &self.adj[node-1] {
+                            if !visited.contains(j) {
+                                visited.push(j.clone());
+                                queue.push_back(j.clone())
+                            }
                         }
                     }
                 }
             }
+        } else {
+            let mut tree_edges: Vec<(usize, usize)> = Vec::new();
+            for i in 1..=self.node_quantity {
+                if !visited.contains(&i) {
+                    let mut queue: VecDeque<usize> = VecDeque::new();
+                    visited.push(i);
+                    queue.push_back(i);
+                    while !queue.is_empty() {
+                        let node = queue.pop_front().unwrap();
+                        traversal.push(node);
+                        for j in &self.adj[node-1] {
+                            if !visited.contains(j) {
+                                tree_edges.push((node, j.clone()));
+                                visited.push(j.clone());
+                                queue.push_back(j.clone())
+                            }
+                        }
+                    }
+                }
+            }
+            println!("{:?}", tree_edges)
         }
         for node in traversal {
             print!("{node} ");
