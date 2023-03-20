@@ -134,6 +134,25 @@ impl Graph {
         print!("\n");
     }
 
+    fn find_zero_indegree(&self) -> Vec<usize> {
+        let mut zero_indegree: Vec<usize> = Vec::new();
+        for i in self.adj.clone() {
+            for j in i {
+                if zero_indegree.contains(&j){
+                    let index = zero_indegree.iter().position(|x| *x == j).unwrap();
+                    zero_indegree.remove(index);
+                }
+            }
+        }
+        return zero_indegree;
+    }
+
+    pub fn topological_sort(&self) -> Result<Vec<usize>, String> {
+        let mut sorted: Vec<usize> = Vec::new();
+        let mut zero_indegree: Vec<usize> = self.find_zero_indegree();
+        todo!()
+    }
+
 }
 
 fn str_to_edge(string: String) -> (usize, usize){
@@ -178,6 +197,8 @@ fn gen_graph_from_console() ->  Graph{
     } else {
         Graph::new(Directionality::Undirected, node_quantity, edges)
     }
+
+
 }
 
 fn main() {
