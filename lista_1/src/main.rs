@@ -36,30 +36,59 @@ impl Graph {
         Self { _directionality: directionality, node_quantity: node_quantity, adj: adj }
     }
 
-    pub fn dfs(&self, _tree: bool) {
+    pub fn dfs(&self, tree: bool){
         let mut visited: Vec<usize> = Vec::new();
-        for node_id in 1..=self.node_quantity{
-            if !visited.contains(&node_id) {
-                Self::dfs_tool(node_id, &mut visited, &self.adj);
+        let mut traversal: Vec<usize> = Vec::new();
+        if tree == false {
+            for i in 1..=self.node_quantity {
+                if !visited.contains(&i) {
+                    let mut stack: Vec<usize> = Vec::new();
+                    visited.push(i);
+                    stack.push(i);
+                    while !stack.is_empty() {
+                        let node = stack.pop().unwrap();
+                        traversal.push(node);
+                        for j in &self.adj[node-1] {
+                            if !visited.contains(j) {
+                                visited.push(j.clone());
+                                stack.push(j.clone());
+                            }
+                        }
+                    }
+                }
             }
+        } else {
+            let mut tree_edges: Vec<(usize, usize)> = Vec::new();
+            for i in 1..=self.node_quantity {
+                if !visited.contains(&i) {
+                    let mut stack: Vec<usize> = Vec::new();
+                    visited.push(i);
+                    stack.push(i);
+                    while !stack.is_empty() {
+                        let node = stack.pop().unwrap();
+                        traversal.push(node);
+                        for j in &self.adj[node-1] {
+                            if !visited.contains(j) {
+                                tree_edges.push((node, j.clone()));
+                                visited.push(j.clone());
+                                stack.push(j.clone());
+                            }
+                        }
+                    }
+                }
+            }
+            println!("{:?}", tree_edges)
+        }
+        for node in traversal {
+            print!("{node} ");
         }
         print!("\n");
     }
 
-    fn dfs_tool(node_id: usize, visited: &mut Vec<usize>, adj: &Vec<Vec<usize>>){
-        visited.push(node_id);
-        print!("{node_id} ");
-        for edge in &adj[node_id - 1] {
-            if !visited.contains(edge){
-                Self::dfs_tool(edge.clone(), visited, adj);
-            }
-        }
-    }
-
-    pub fn bfs(&self, _tree: bool){
+    pub fn bfs(&self, tree: bool){
         let mut visited: Vec<usize> = Vec::new();
         let mut traversal: Vec<usize> = Vec::new();
-        if _tree == false{
+        if tree == false{
             for i in 1..=self.node_quantity {
                 if !visited.contains(&i) {
                     let mut queue: VecDeque<usize> = VecDeque::new();
@@ -71,7 +100,7 @@ impl Graph {
                         for j in &self.adj[node-1] {
                             if !visited.contains(j) {
                                 visited.push(j.clone());
-                                queue.push_back(j.clone())
+                                queue.push_back(j.clone());
                             }
                         }
                     }
@@ -91,7 +120,7 @@ impl Graph {
                             if !visited.contains(j) {
                                 tree_edges.push((node, j.clone()));
                                 visited.push(j.clone());
-                                queue.push_back(j.clone())
+                                queue.push_back(j.clone());
                             }
                         }
                     }
