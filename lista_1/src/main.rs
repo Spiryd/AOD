@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use::std::io;
 
 #[derive(Debug)]
@@ -42,19 +43,46 @@ impl Graph {
                 Self::dfs_tool(node_id, &mut visited, &self.adj);
             }
         }
+        print!("\n");
     }
 
     fn dfs_tool(node_id: usize, visited: &mut Vec<usize>, adj: &Vec<Vec<usize>>){
         visited.push(node_id);
         print!("{node_id} ");
-        for edges in &adj[node_id - 1] {
-
+        for edge in &adj[node_id - 1] {
+            if !visited.contains(edge){
+                Self::dfs_tool(edge.clone(), visited, adj);
+            }
         }
     }
 
     pub fn bfs(&self, _tree: bool){
-        todo!()
+        let mut visited: Vec<usize> = Vec::new();
+        let mut traversal: Vec<usize> = Vec::new();
+
+        for i in 1..=self.node_quantity {
+            if !visited.contains(&i) {
+                let mut queue: VecDeque<usize> = VecDeque::new();
+                visited.push(i);
+                queue.push_back(i);
+                while !queue.is_empty() {
+                    let node = queue.pop_front().unwrap();
+                    traversal.push(node);
+                    for j in &self.adj[node-1] {
+                        if !visited.contains(j) {
+                            visited.push(j.clone());
+                            queue.push_back(j.clone())
+                        }
+                    }
+                }
+            }
+        }
+        for node in traversal {
+            print!("{node} ");
+        }
+        print!("\n");
     }
+
 }
 
 fn str_to_edge(string: String) -> (usize, usize){
@@ -65,7 +93,7 @@ fn str_to_edge(string: String) -> (usize, usize){
     (nodes.get(0).unwrap().to_owned(), nodes.get(1).unwrap().to_owned())
 }
 
-fn main() {
+fn gen_graph_from_console() ->  Graph{
     let mut directionality = String::new();
     println!("Directed or not(D or U): ");
     io::stdin()
@@ -93,13 +121,17 @@ fn main() {
         edges.push(str_to_edge(edge.clone()));
         edge = String::from("");
     } 
-    let graph: Graph;
-    if directionality == "D" {
-        graph = Graph::new(Directionality::Directed, node_quantity, edges);
+
+    if directionality.contains('D'){
+        Graph::new(Directionality::Directed, node_quantity, edges)
     } else {
-        graph = Graph::new(Directionality::Undirected, node_quantity, edges);
+        Graph::new(Directionality::Undirected, node_quantity, edges)
     }
+}
+
+fn main() {
+    let graph = Graph::new(Directionality::Directed, 6, vec![(1, 3), (1, 2), (3, 6), (2, 3), (2, 4), (2, 5), (4, 5), (5, 6)]);
     println!("{:?}", graph);
     graph.dfs(false);
-    
+    graph.bfs(false);
 }
