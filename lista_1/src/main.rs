@@ -134,8 +134,8 @@ impl Graph {
         print!("\n");
     }
 
-    fn find_zero_indegree(&self) -> Vec<usize> {
-        let mut zero_indegree: Vec<usize> = Vec::new();
+    fn find_zero_indegrees(&self) -> Vec<usize> {
+        let mut zero_indegree: Vec<usize> = (1..=self.node_quantity).collect();
         for i in self.adj.clone() {
             for j in i {
                 if zero_indegree.contains(&j){
@@ -147,10 +147,46 @@ impl Graph {
         return zero_indegree;
     }
 
+    fn has_zero_indegree(n: usize, graph: Vec<Vec<usize>>) -> bool {
+        for outcoming_node_edges in graph{
+            for node in outcoming_node_edges {
+                if node == n {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    fn has_edges(graph: Vec<Vec<usize>>) -> bool{
+        for  outcoming_node_edges in graph {
+            if !outcoming_node_edges.is_empty(){
+                return true;
+            }
+        }
+        return false;
+    }
+
     pub fn topological_sort(&self) -> Result<Vec<usize>, String> {
         let mut sorted: Vec<usize> = Vec::new();
-        let mut zero_indegree: Vec<usize> = self.find_zero_indegree();
-        todo!()
+        let mut zero_indegree: Vec<usize> = self.find_zero_indegrees();
+        let mut working_graph = self.adj.clone();
+        while !zero_indegree.is_empty() {
+            let n = zero_indegree.pop().unwrap();
+            sorted.push(n);
+            for m in working_graph[n - 1].clone() {
+                let index = working_graph[n - 1].iter().position(|x| *x == m).unwrap();
+                working_graph[n-1].swap_remove(index);
+                if Self::has_zero_indegree(m, working_graph.clone()) {
+                    zero_indegree.push(m);
+                }
+            }
+        }
+        if Self::has_edges(working_graph) {
+            panic!("Not a DAG")
+        }else {
+            Ok(sorted)
+        }
     }
 
 }
@@ -202,8 +238,9 @@ fn gen_graph_from_console() ->  Graph{
 }
 
 fn main() {
-    let graph = Graph::new(Directionality::Directed, 6, vec![(1, 3), (1, 2), (3, 6), (2, 3), (2, 4), (2, 5), (4, 5), (5, 6)]);
+    let graph = Graph::new(Directionality::Directed, 6, vec![(1, 3), (1, 2), (3, 5), (3, 6), (2, 3), (2, 4), (2, 5), (4, 5), (5, 6)]);
     println!("{:?}", graph);
     graph.dfs(false);
     graph.bfs(false);
+    println!("{:?}", graph.topological_sort());
 }
