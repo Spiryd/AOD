@@ -140,7 +140,7 @@ impl Graph {
             for j in i {
                 if zero_indegree.contains(&j){
                     let index = zero_indegree.iter().position(|x| *x == j).unwrap();
-                    zero_indegree.remove(index);
+                    zero_indegree.swap_remove(index);
                 }
             }
         }
@@ -189,9 +189,51 @@ impl Graph {
         }
     }
 
+    fn strong_connect(&self, node: usize, index: &mut usize, node_index: &mut Vec<Option<usize>>, low_link: &mut Vec<usize>, stack: &mut Vec<usize>, strongly_connected_cmps: &mut  Vec<Vec<usize>>) {
+        node_index[node - 1] = Some(*index);
+        low_link[node - 1] = *index;
+        *index += 1;
+        stack.push(node);
+
+        for edge_outgoing in self.adj[node - 1].clone() {
+            if node_index[edge_outgoing - 1].is_none(){
+                self.strong_connect(edge_outgoing, index, node_index, low_link, stack, strongly_connected_cmps);
+                low_link[node - 1] = std::cmp::min(low_link[node - 1], low_link[edge_outgoing - 1]);
+            } else if stack.contains(&edge_outgoing) {
+                low_link[node - 1] = std::cmp::min(low_link[node - 1], node_index[edge_outgoing - 1].unwrap());
+            }
+        }
+
+        if low_link[node - 1] == node_index[node - 1].unwrap() {
+            let mut strong_connected_cmp: Vec<usize> = Vec::new();
+            loop {
+                let other_node = stack.pop().unwrap();
+                strong_connected_cmp.push(other_node);
+                if other_node == node {
+                    break;
+                }
+            }
+        }
+
+    }
+
+    pub fn find_strongly_connected_cmp(&self) -> Vec<Vec<usize>>{
+        let mut strongly_connected_cmps: Vec<Vec<usize>> = Vec::new();
+        let mut node_index: Vec<Option<usize>> = vec![None; self.node_quantity];
+        let mut low_link: Vec<usize> = vec![0; self.node_quantity];
+        let mut index: usize = 0;
+        let mut stack: Vec<usize> = Vec::new();
+        for node in 1..=self.node_quantity {
+            if node_index[node - 1].is_none() {
+                self.strong_connect(node, &mut index, &mut node_index, &mut low_link, &mut stack, &mut strongly_connected_cmps);
+            }
+        }
+        return strongly_connected_cmps;
+    }
+
 }
 
-fn str_to_edge(string: String) -> (usize, usize){
+fn _str_to_edge(string: String) -> (usize, usize){
     let mut nodes: Vec<usize> = Vec::new();
     for node in string.split_whitespace(){
         nodes.push(node.trim().parse().expect("Should be a number!"));
@@ -199,7 +241,7 @@ fn str_to_edge(string: String) -> (usize, usize){
     (nodes.get(0).unwrap().to_owned(), nodes.get(1).unwrap().to_owned())
 }
 
-fn gen_graph_from_console() ->  Graph{
+fn _gen_graph_from_console() ->  Graph{
     let mut directionality = String::new();
     println!("Directed or not(D or U): ");
     io::stdin()
@@ -224,7 +266,7 @@ fn gen_graph_from_console() ->  Graph{
         io::stdin()
             .read_line(&mut edge)
             .expect("Failed to read line");
-        edges.push(str_to_edge(edge.clone()));
+        edges.push(_str_to_edge(edge.clone()));
         edge = String::from("");
     } 
 
@@ -233,8 +275,6 @@ fn gen_graph_from_console() ->  Graph{
     } else {
         Graph::new(Directionality::Undirected, node_quantity, edges)
     }
-
-
 }
 
 fn main() {
