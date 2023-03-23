@@ -1,5 +1,9 @@
 use std::collections::VecDeque;
-use::std::io;
+use std::io::prelude::*;
+use std::io::BufReader;
+use std::io;
+use std::env;
+use std::fs::File;
 
 #[derive(Debug)]
 pub enum Directionality {
@@ -236,7 +240,7 @@ impl Graph {
         let mut color: Vec<i8> = vec![-1; self.node_quantity];
         //bfs queue (node, color)
         let mut queue: VecDeque<(usize, i8)> = VecDeque::new();
-
+        //bfs with coloring loop to get disconnected parts
         for node in 1..=self.node_quantity {
             if color[node - 1] == -1 {
                 queue.push_back((node, 0));
@@ -245,6 +249,7 @@ impl Graph {
                     //(node, color)
                     let pair = queue.pop_front().unwrap();
                     for connected_node in self.adj[pair.0 - 1].clone() {
+                        // two colors cannot be touching if it is a bigraph
                         if color[connected_node - 1] == pair.1 {
                             return false;
                         }else if color[connected_node - 1] == -1 {
@@ -308,6 +313,13 @@ fn _gen_graph_from_console() ->  Graph{
         Graph::new(Directionality::Undirected, node_quantity, edges)
     }
 }
+
+#[test]
+fn test2(){
+    println!("ok");
+
+}
+
 
 fn main() {
     let graph = Graph::new(Directionality::Directed, 6, vec![(1, 3), (1, 2), (3, 5), (3, 6), (2, 3), (2, 4), (2, 5), (4, 5), (5, 6)]);
