@@ -231,6 +231,38 @@ impl Graph {
         return strongly_connected_cmps;
     }
 
+    pub fn is_bipartite(&self) -> bool{
+        // -1 = uncolored, 0 = red, 1 = blue
+        let mut color: Vec<i8> = vec![-1; self.node_quantity];
+        //bfs queue (node, color)
+        let mut queue: VecDeque<(usize, i8)> = VecDeque::new();
+
+        for node in 1..=self.node_quantity {
+            if color[node - 1] == -1 {
+                queue.push_back((node, 0));
+                color[node - 1] = 0;
+                while !queue.is_empty() {
+                    //(node, color)
+                    let pair = queue.pop_front().unwrap();
+                    for connected_node in self.adj[pair.0 - 1].clone() {
+                        if color[connected_node - 1] == pair.1 {
+                            return false;
+                        }else if color[connected_node - 1] == -1 {
+                            if pair.1 == 0 {
+                                color[connected_node - 1] = 1;
+                            }else {
+                                color[connected_node - 1] = 0;
+                            }
+                            queue.push_back((connected_node, color[connected_node - 1]))
+                        }
+                    }
+                    
+                }
+            }
+        }
+        return true;
+    }
+
 }
 
 fn _str_to_edge(string: String) -> (usize, usize){
