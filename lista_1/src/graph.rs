@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Directionality {
     Directed,
     Undirected
@@ -8,8 +8,8 @@ pub enum Directionality {
 
 #[derive(Debug)]
 pub struct Graph{
-    _directionality: Directionality,
-    node_quantity: usize,
+    directionality: Directionality,
+    pub node_quantity: usize,
     adj: Vec<Vec<usize>>
 }
 
@@ -32,7 +32,7 @@ impl Graph {
                 }
             }
         }
-        Self { _directionality: directionality, node_quantity: node_quantity, adj: adj }
+        Self { directionality: directionality, node_quantity: node_quantity, adj: adj }
     }
 
     pub fn dfs(&self, tree: bool){
@@ -133,60 +133,40 @@ impl Graph {
         print!("\n");
     }
 
-    fn find_zero_indegrees(&self) -> Vec<usize> {
-        let mut zero_indegree: Vec<usize> = (1..=self.node_quantity).collect();
-        for i in self.adj.clone() {
-            for j in i {
-                if zero_indegree.contains(&j){
-                    let index = zero_indegree.iter().position(|x| *x == j).unwrap();
-                    zero_indegree.swap_remove(index);
-                }
-            }
-        }
-        return zero_indegree;
-    }
 
-    fn has_zero_indegree(n: usize, graph: Vec<Vec<usize>>) -> bool {
-        for outcoming_node_edges in graph{
-            for node in outcoming_node_edges {
-                if node == n {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    fn has_edges(graph: Vec<Vec<usize>>) -> bool{
-        for  outcoming_node_edges in graph {
-            if !outcoming_node_edges.is_empty(){
-                return true;
-            }
-        }
-        return false;
-    }
-
+    //Kahn's Algorithm Topological Sort
     pub fn topological_sort(&self) -> Result<Vec<usize>, String> {
-        let mut sorted: Vec<usize> = Vec::new();
-        let mut zero_indegree: Vec<usize> = self.find_zero_indegrees();
-        let mut working_graph = self.adj.clone();
-        while !zero_indegree.is_empty() {
-            let n = zero_indegree.pop().unwrap();
-            sorted.push(n);
-            for m in working_graph[n - 1].clone() {
-                let index = working_graph[n - 1].iter().position(|x| *x == m).unwrap();
-                working_graph[n-1].swap_remove(index);
-                if Self::has_zero_indegree(m, working_graph.clone()) {
-                    zero_indegree.push(m);
+        let n = self.node_quantity;
+        let mut in_degrees: Vec<usize> = vec![0; n];
+        for from in &self.adj {
+            for to in from{
+                in_degrees[to - 1] += 1;
+            }
+        }
+        let mut queue: VecDeque<usize> = VecDeque::new();
+        for i in 0..n {
+            if in_degrees[i] == 0 {
+                queue.push_back(i + 1)
+            }
+        }
+        let mut order: Vec<usize> = Vec::new();
+        while !queue.is_empty() {
+            let node = queue.pop_front().unwrap();
+            order.push(node);
+            for to in &self.adj[node - 1] {
+                in_degrees[*to - 1] -= 1;
+                if in_degrees[*to - 1] == 0{
+                    queue.push_back(*to);
                 }
             }
         }
-        if Self::has_edges(working_graph) {
-            panic!("Not a DAG")
+        if order.len() != n{
+            Err("Not a DAG".to_string())
         }else {
-            Ok(sorted)
+            Ok(order)
         }
     }
+
 
     fn _strong_connect(&self, node: usize, index: &mut usize, node_index: &mut Vec<Option<usize>>, low_link: &mut Vec<usize>, stack: &mut Vec<usize>, strongly_connected_cmps: &mut  Vec<Vec<usize>>) {
         node_index[node - 1] = Some(*index);
@@ -213,9 +193,8 @@ impl Graph {
                 }
             }
         }
-
     }
-
+    
     pub fn find_strongly_connected_cmp(&self) -> Vec<Vec<usize>>{
         let mut strongly_connected_cmps: Vec<Vec<usize>> = Vec::new();
         let mut node_index: Vec<Option<usize>> = vec![None; self.node_quantity];

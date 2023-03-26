@@ -1,15 +1,24 @@
 use std::{io, fs};
+use std::fs::File;
+use std::io::BufRead;
+use std::path::Path;
 use dialoguer::{console::Term, theme::ColorfulTheme, Select};
 
 mod graph;
 use graph::*;
 
-fn _str_to_edge(string: String) -> (usize, usize){
+fn str_to_edge(string: &String) -> (usize, usize){
     let mut nodes: Vec<usize> = Vec::new();
     for node in string.split_whitespace(){
         nodes.push(node.trim().parse().expect("Should be a number!"));
     }
     (nodes.get(0).unwrap().to_owned(), nodes.get(1).unwrap().to_owned())
+}
+
+fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
+where P: AsRef<Path>, {
+    let file = File::open(filename)?;
+    Ok(io::BufReader::new(file).lines())
 }
 
 fn _gen_graph_from_console() ->  Graph{
@@ -37,7 +46,7 @@ fn _gen_graph_from_console() ->  Graph{
         io::stdin()
             .read_line(&mut edge)
             .expect("Failed to read line");
-        edges.push(_str_to_edge(edge.clone()));
+        edges.push(str_to_edge(&edge));
         edge = String::from("");
     } 
 
@@ -67,37 +76,105 @@ fn test1(){
 fn test2(){
     let paths = fs::read_dir("./test_data/2").unwrap();
     for path in paths {
-        println!("Name: {}", path.unwrap().path().display())
+        let graph: Graph;
+        if let Ok(mut lines) = read_lines(path.unwrap().path().display().to_string()) {
+            let directionality = lines.next().unwrap().unwrap();
+            let node_quantity: usize = lines.next().unwrap().unwrap().parse().unwrap();
+            lines.next();
+            let mut edges:Vec<(usize, usize)> = Vec::new();
+            for line in lines {
+                if let Ok(ip) = line {
+                    edges.push(str_to_edge(&ip))
+                }
+            }
+            if directionality == "D"{
+                graph = Graph::new(Directionality::Directed, node_quantity, edges);
+            }else {
+                graph = Graph::new(Directionality::Directed, node_quantity, edges);
+            }
+            let result = graph.topological_sort();
+            if graph.node_quantity <= 200{
+                match result {
+                    Ok(sorted) => println!("{:?}", sorted),
+                    Err(e) => println!("{e}")
+                }
+            } else {
+                match result {
+                    Ok(_) => println!("DAG"),
+                    Err(_) => println!("Not a DAG")
+                }
+            }
+        }
     }
 }
 
 fn test3(){
     let paths = fs::read_dir("./test_data/3").unwrap();
     for path in paths {
-        println!("Name: {}", path.unwrap().path().display())
+        let graph: Graph;
+        if let Ok(mut lines) = read_lines(path.unwrap().path().display().to_string()) {
+            let directionality = lines.next().unwrap().unwrap();
+            let node_quantity: usize = lines.next().unwrap().unwrap().parse().unwrap();
+            lines.next();
+            let mut edges:Vec<(usize, usize)> = Vec::new();
+            for line in lines {
+                if let Ok(ip) = line {
+                    edges.push(str_to_edge(&ip))
+                }
+            }
+            if directionality == "D"{
+                graph = Graph::new(Directionality::Directed, node_quantity, edges);
+            }else {
+                graph = Graph::new(Directionality::Directed, node_quantity, edges);
+            }
+            println!("SCC = {:?}", graph.find_strongly_connected_cmp());
+        }
     }
 }
 
 fn test4(){
     let paths = fs::read_dir("./test_data/4").unwrap();
     for path in paths {
-        println!("Name: {}", path.unwrap().path().display())
+        let graph: Graph;
+        if let Ok(mut lines) = read_lines(path.unwrap().path().display().to_string()) {
+            let directionality = lines.next().unwrap().unwrap();
+            let node_quantity: usize = lines.next().unwrap().unwrap().parse().unwrap();
+            lines.next();
+            let mut edges:Vec<(usize, usize)> = Vec::new();
+            for line in lines {
+                if let Ok(ip) = line {
+                    edges.push(str_to_edge(&ip))
+                }
+            }
+            if directionality == "D"{
+                graph = Graph::new(Directionality::Directed, node_quantity, edges);
+            }else {
+                graph = Graph::new(Directionality::Directed, node_quantity, edges);
+            }
+            if graph.is_bipartite() {
+                println!("Graph is bipartite");
+            } else {
+                println!("Graph NOT bipartite");
+            }
+        }
     }
 }
 
 fn main() {
-    let items = vec!["Test 1", "Test 2", "Test 3", "Test 4"];
-    let selection = Select::with_theme(&ColorfulTheme::default())
+    let items = vec!["Test 1", "Test 2", "Test 3", "Test 4", "Exit"];
+    loop {
+        let selection = Select::with_theme(&ColorfulTheme::default())
         .items(&items)
         .default(0)
         .interact_on_opt(&Term::stderr())
         .expect("failed");
 
-    match selection.unwrap() + 1 {
-        1 => test1(),
-        2 => test2(),
-        3 => test3(),
-        4 => test4(),
-        _ => println!("nothing to see")
+        match selection.unwrap() + 1 {
+            1 => test1(),
+            2 => test2(),
+            3 => test3(),
+            4 => test4(),
+            _ => break
+        }
     }
 }
