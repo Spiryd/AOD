@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Directionality {
     Directed,
     Undirected
@@ -167,46 +167,19 @@ impl Graph {
         }
     }
 
-
-    fn _strong_connect(&self, node: usize, index: &mut usize, node_index: &mut Vec<Option<usize>>, low_link: &mut Vec<usize>, stack: &mut Vec<usize>, strongly_connected_cmps: &mut  Vec<Vec<usize>>) {
-        node_index[node - 1] = Some(*index);
-        low_link[node - 1] = *index;
-        *index += 1;
-        stack.push(node);
-
-        for edge_outgoing in self.adj[node - 1].clone() {
-            if node_index[edge_outgoing - 1].is_none(){
-                self._strong_connect(edge_outgoing, index, node_index, low_link, stack, strongly_connected_cmps);
-                low_link[node - 1] = std::cmp::min(low_link[node - 1], low_link[edge_outgoing - 1]);
-            } else if stack.contains(&edge_outgoing) {
-                low_link[node - 1] = std::cmp::min(low_link[node - 1], node_index[edge_outgoing - 1].unwrap());
+    fn transpose(&self) -> Graph{
+        let mut edges: Vec<(usize, usize)> = Vec::new();
+        for i in 1..self.node_quantity {
+            for j  in &self.adj[i - 1] { 
+                edges.push((*j, i))
             }
         }
-
-        if low_link[node - 1] == node_index[node - 1].unwrap() {
-            let mut strong_connected_cmp: Vec<usize> = Vec::new();
-            loop {
-                let other_node = stack.pop().unwrap();
-                strong_connected_cmp.push(other_node);
-                if other_node == node {
-                    break;
-                }
-            }
-        }
+        Graph::new(self.directionality.clone(), self.node_quantity, edges)
     }
+
     
-    pub fn find_strongly_connected_cmp(&self) -> Vec<Vec<usize>>{
-        let mut strongly_connected_cmps: Vec<Vec<usize>> = Vec::new();
-        let mut node_index: Vec<Option<usize>> = vec![None; self.node_quantity];
-        let mut low_link: Vec<usize> = vec![0; self.node_quantity];
-        let mut index: usize = 0;
-        let mut stack: Vec<usize> = Vec::new();
-        for node in 1..=self.node_quantity {
-            if node_index[node - 1].is_none() {
-                self._strong_connect(node, &mut index, &mut node_index, &mut low_link, &mut stack, &mut strongly_connected_cmps);
-            }
-        }
-        return strongly_connected_cmps;
+    pub fn find_scc(&self){
+        
     }
 
     pub fn is_bipartite(&self) -> bool{

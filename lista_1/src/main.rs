@@ -127,7 +127,7 @@ fn test3(){
             }else {
                 graph = Graph::new(Directionality::Directed, node_quantity, edges);
             }
-            println!("SCC = {:?}", graph.find_strongly_connected_cmp());
+            println!("SCC = {:?}", graph.find_scc());
         }
     }
 }
