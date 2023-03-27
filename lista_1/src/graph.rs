@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::collections::{VecDeque, HashMap, HashSet};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Directionality {
@@ -8,7 +8,7 @@ pub enum Directionality {
 
 #[derive(Debug)]
 pub struct Graph{
-    directionality: Directionality,
+    pub directionality: Directionality,
     pub node_quantity: usize,
     adj: Vec<Vec<usize>>
 }
@@ -167,19 +167,9 @@ impl Graph {
         }
     }
 
-    fn transpose(&self) -> Graph{
-        let mut edges: Vec<(usize, usize)> = Vec::new();
-        for i in 1..self.node_quantity {
-            for j  in &self.adj[i - 1] { 
-                edges.push((*j, i))
-            }
-        }
-        Graph::new(self.directionality.clone(), self.node_quantity, edges)
-    }
 
-    
-    pub fn find_scc(&self){
-        
+    pub fn find_sccs(&self) -> Vec<Vec<usize>> {
+        todo!();
     }
 
     pub fn is_bipartite(&self) -> bool{

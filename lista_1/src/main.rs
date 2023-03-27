@@ -127,7 +127,12 @@ fn test3(){
             }else {
                 graph = Graph::new(Directionality::Directed, node_quantity, edges);
             }
-            println!("SCC = {:?}", graph.find_scc());
+            if node_quantity <= 200 {
+                println!("SCC = {:?}", graph.find_sccs());
+            } else {
+                println!("num of SCCs = {:?}", graph.find_sccs().len());
+            }
+            
         }
     }
 }
