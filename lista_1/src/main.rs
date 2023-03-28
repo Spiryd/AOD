@@ -127,12 +127,16 @@ fn test3(){
             }else {
                 graph = Graph::new(Directionality::Directed, node_quantity, edges);
             }
-            if node_quantity <= 200 {
-                println!("SCC = {:?}", graph.find_sccs());
-            } else {
-                println!("num of SCCs = {:?}", graph.find_sccs().len());
+            let sccs = graph.find_sccs();
+            println!("num of SCCs = {:?}", sccs.len());
+            let mut scc_lengths: Vec<usize> = Vec::new();
+            for i in sccs.clone(){
+                scc_lengths.push(i.len());
             }
-            
+            println!("num of element in each SCC = {:?}", scc_lengths);
+            if node_quantity <= 200 {
+                println!("SCC = {:?}", sccs);
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-use std::collections::{VecDeque, HashMap, HashSet};
+use std::collections::VecDeque;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Directionality {
@@ -169,8 +169,58 @@ impl Graph {
 
 
     pub fn find_sccs(&self) -> Vec<Vec<usize>> {
-        todo!();
+
+        fn reverse_graph(graph: &Vec<Vec<usize>>) -> Vec<Vec<usize>> {
+            let mut rev_graph = vec![Vec::new(); graph.len()];
+            for (u, edges) in graph.iter().enumerate() {
+                for &v in edges {
+                    rev_graph[v - 1].push(u + 1);
+                }
+            }
+            rev_graph
+        }
+        
+        fn dfs(graph: &Vec<Vec<usize>>, v: usize, visited: &mut Vec<bool>, order: &mut Vec<usize>) {
+            let mut stack = vec![v];
+            while let Some(u) = stack.pop() {
+                if !visited[u - 1] {
+                    visited[u - 1] = true;
+                    for &w in &graph[u - 1] {
+                        if !visited[w - 1] {
+                            stack.push(w);
+                        }
+                    }
+                    order.push(u);
+                }
+            }
+        }
+        let graph = self.adj.clone();
+        // Step 1: Compute the reverse graph.
+        let rev_graph = reverse_graph(&graph);
+    
+        // Step 2: Perform DFS on the reverse graph to get the finishing times.
+        let mut visited = vec![false; graph.len()];
+        let mut stack = Vec::new();
+        for i in 1..=graph.len() {
+            if !visited[i - 1] {
+                dfs(&rev_graph, i, &mut visited, &mut stack);
+            }
+        }
+    
+        // Step 3: Perform DFS on the original graph in the order of finishing times.
+        let mut visited = vec![false; graph.len()];
+        let mut sccs = Vec::new();
+        while let Some(v) = stack.pop() {
+            if !visited[v - 1] {
+                let mut scc = Vec::new();
+                dfs(&graph, v, &mut visited, &mut scc);
+                sccs.push(scc);
+            }
+        }
+        sccs
     }
+    
+
 
     pub fn is_bipartite(&self) -> bool{
         // -1 = uncolored, 0 = red, 1 = blue
