@@ -167,9 +167,9 @@ impl Graph {
         }
     }
 
-
+    //Kosaraji's Algorithm
     pub fn find_sccs(&self) -> Vec<Vec<usize>> {
-
+        //transposes the graph
         fn reverse_graph(graph: &Vec<Vec<usize>>) -> Vec<Vec<usize>> {
             let mut rev_graph = vec![Vec::new(); graph.len()];
             for (u, edges) in graph.iter().enumerate() {
@@ -179,7 +179,7 @@ impl Graph {
             }
             rev_graph
         }
-        
+        //dfs form node
         fn dfs(graph: &Vec<Vec<usize>>, v: usize, visited: &mut Vec<bool>, order: &mut Vec<usize>) {
             let mut stack = vec![v];
             while let Some(u) = stack.pop() {

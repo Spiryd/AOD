@@ -71,6 +71,7 @@ fn test1(){
         println!("bfs:");
         graph.bfs(true);
     }
+    println!("\n");
 }
 
 fn test2(){
@@ -106,6 +107,7 @@ fn test2(){
             }
         }
     }
+    println!("\n");
 }
 
 fn test3(){
@@ -139,6 +141,7 @@ fn test3(){
             }
         }
     }
+    println!("\n");
 }
 
 fn test4(){
@@ -167,6 +170,7 @@ fn test4(){
             }
         }
     }
+    println!("\n");
 }
 
 fn main() {
