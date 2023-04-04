@@ -6,10 +6,6 @@ N = 8 #wysokość
 M = 8 #szerokość
 k = 8 #odległość widzenia kamer
 
-function pole_widzenia(kamery, n, m)
-    return 1
-end
-
 model = Model(HiGHS.Optimizer)
 @variable(model, kamery[1:N, 1:M], Bin);
 @variable(model, kontenery[1:N, 1:M], Bin);
@@ -20,7 +16,7 @@ for m in 1:M
 end
 for m in 1:M
     for n in 1:N
-        @constraint(model, (kontenery[n, m] + pole_widzenia(kamery, n, m)) == 2)
+        @constraint(model, (kontenery[n, m] + (sum(kamery[n, :]) > 0) || (sum(kamery[:, m]) > 0)) == 2)
     end
 end
 @objective(model, Max, sum(kontenery));
