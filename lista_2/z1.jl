@@ -7,7 +7,7 @@ data = JSON.parse("""
     "firmy": {
         "Firma1": {"capacity": 275},
         "Firma2": {"capacity": 550},
-        "Firma1": {"capacity": 660}
+        "Firma3": {"capacity": 660}
     },
     "lotniska": {
         "Lotnisko1": {"demand": 110},
