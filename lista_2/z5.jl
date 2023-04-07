@@ -48,7 +48,7 @@ for p in P
     @constraint(model, sum(x[m, p] * (processing_times(m, p)^-1) for m in M) <= data["products"][p]["demand"])   
 end
 #maksymalizujemy profit
-@objective(model, Max, sum((x[m, p] * (processing_times(m, p)^-1) * (data["products"][p]["price"] - data["products"][p]["costs"])) for m in M, p in P))
+@objective(model, Max, sum((x[m, p] * (processing_times(m, p)^-1) * (data["products"][p]["price"] - data["products"][p]["costs"]) - ((x[m, p]/60) * data["machines"][m]["costs"])) for m in M, p in P))
 #optimize
 optimize!(model)
 println("profit = ", objective_value(model))
