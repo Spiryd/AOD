@@ -11,15 +11,15 @@ import JSON
 data = JSON.parse("""
 {
     "firmy": {
-        "Firma1": {"capacity": 275},
-        "Firma2": {"capacity": 550},
-        "Firma3": {"capacity": 660}
+        "Firma1": {"capacity": 275000},
+        "Firma2": {"capacity": 550000},
+        "Firma3": {"capacity": 660000}
     },
     "lotniska": {
-        "Lotnisko1": {"demand": 110},
-        "Lotnisko2": {"demand": 220},
-        "Lotnisko3": {"demand": 330},
-        "Lotnisko4": {"demand": 440}
+        "Lotnisko1": {"demand": 110000},
+        "Lotnisko2": {"demand": 220000},
+        "Lotnisko3": {"demand": 330000},
+        "Lotnisko4": {"demand": 440000}
     },
     "ceny": {
         "Firma1 => Lotnisko1": 10,

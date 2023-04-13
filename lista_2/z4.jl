@@ -1,7 +1,6 @@
 #=
 Maksmilian Neumann
-=#
-
+=#    
 #importujemey biblioteke do modelowania i solver
 using JuMP
 using HiGHS
@@ -22,7 +21,7 @@ N = size(c)[1]
 M = size(c)[2]
 #tworzymy model
 model = Model(HiGHS.Optimizer)
-#towrzymy zmienno jakonmatrix 2d w rozmiarze naszego placu na któej albo jest kamera 1 albo nie ma 0
+#towrzymy zmienno jako matrix 2d w rozmiarze naszego placu na któej albo jest kamera 1 albo nie ma 0
 @variable(model, x[1:N, 1:M], Bin)
 #tworzymy nasz cel (minimalizacaj ilości kamer)
 @objective(model, Min, sum(x))
@@ -36,8 +35,7 @@ for n in 1:N, m in 1:M
         #odległośćw poziomie gdzie powinna znajdować sie conajmniej jedna kamera od kontenera
         col_range = max(1, m - k):min(M, m + k)
         #okraniczenie ze k miesc w góre dół prawo i lewo musi znajdować sie conajmniej jendna kamera dla kontenera
-        @constraint(model, (sum(x[row_range, m]) + sum(x[n, col_range])) >= 1) 
-
+        @constraint(model, (sum(x[row_range, m]) + sum(x[n, col_range])) >= 1)
     end
 end
 #optymalizujemy model

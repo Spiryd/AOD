@@ -64,7 +64,7 @@ for p in P
 end
 println("schedule:")
 for m in M, p in P
-    if  !(value(x[m, p]) ≈ 0 )    
-        println(m, " => ", p, ": ", value(x[m, p])) 
+    if  !(value(x[m, p]) ≈ 0)    
+        println(m, " => ", p, ": ", value(x[m, p]))
     end
 end
