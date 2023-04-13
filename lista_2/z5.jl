@@ -1,3 +1,8 @@
+#=
+Maksmilian Neumann
+=#
+
+#importujemey biblioteki do modelowania i obsługi JSON oraz solver 
 using JuMP
 using HiGHS
 import JSON
@@ -32,14 +37,14 @@ data = JSON.parse("""
     }
 }
 """)
-#Klucze do maszyn i produktów
+#klucze do maszyn i produktów
 M = keys(data["machines"])
 P = keys(data["products"])
 #funkcja do odnajdywania czasu obróbki w min/kg
 processing_times(m::String, p::String) = data["processing"]["$(m) => $(p)"]
-#Tworzymy model
+#tworzymy model
 model = Model(HiGHS.Optimizer)
-#Tworzymy zmienna czasy urzytkowania maszyn dla poszczególnych produktów w minutach
+#tworzymy zmienna czasy urzytkowania maszyn dla poszczególnych produktów w minutach
 @variable(model, x[M, P] >= 0, Int)
 #zadna maszyna nie moze pracować ponad 60 h
 @constraint(model, [m in M], sum(x[m, :]) <= (60*60))
@@ -49,8 +54,9 @@ for p in P
 end
 #maksymalizujemy profit
 @objective(model, Max, sum((x[m, p] * (processing_times(m, p)^-1) * (data["products"][p]["price"] - data["products"][p]["costs"]) - ((x[m, p]/60) * data["machines"][m]["costs"])) for m in M, p in P))
-#optimize
+#optymalizujemy model
 optimize!(model)
+#printujemy wyniki
 println("profit = ", objective_value(model))
 println("kg of products made:")
 for p in P 

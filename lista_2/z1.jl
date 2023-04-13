@@ -1,7 +1,13 @@
+#=
+Maksmilian Neumann
+=#
+
+#importujemey biblioteki do modelowania i obsługi JSON oraz solver 
 using JuMP
 using HiGHS
 import JSON
 
+#dane do zadania
 data = JSON.parse("""
 {
     "firmy": {
@@ -31,22 +37,30 @@ data = JSON.parse("""
     }
 }
 """)
-
+#firmy
 F = keys(data["firmy"])
+#lotniska
 L = keys(data["lotniska"])
+#funkcja ceny od firmy do lotniska
 price(f::String, l::String) = data["ceny"]["$(f) => $(l)"]
-
+#tworzymy model
 model = Model(HiGHS.Optimizer)
+#definiujemy zmienną ilość paliwa dostarczanego z firmy f do lotniska l w postaci 2d matrycy
 @variable(model, x[F, L] >= 0)
+#ograniczenie ze kazda firma nie moze dostarzyc wiecej paliwa niz jest w stanie
 @constraint(model, [f in F], sum(x[f, :]) <= data["firmy"][f]["capacity"])
+#ograniczenie ze kazda lotnisko musi mniec conajmiejmniej spelnione swoje zapotrzebowanie
 @constraint(model, [l in L], sum(x[:, l]) >= data["lotniska"][l]["demand"])
+#ustawiamy cel jako minimalizacja kosztów zakupu paliwa
 @objective(model, Min, sum(price(f, l) * x[f, l] for f in F, l in L));
-
+#optymalizujemy model
 optimize!(model)
 solution_summary(model)
-
+#wyświetlamy wyniki
 for f in F, l in L
     if  !(value(x[f, l]) ≈ 0 )    
         println(f, " => ", l, ": ", value(x[f, l])) 
     end
 end
+
+value(objective_value(model))

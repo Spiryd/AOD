@@ -40,6 +40,11 @@ for j = 1:3, k = 1:3
     @constraint(m, sum(x[i,j,k] for i=1:3) >= min_vehicles[j,k])
 end
 
+# Warunki cyrkulacji
+for i = 1:3, j = 1:3
+    @constraint(m, sum(x[i,j,k] for k=1:3) == sum(x[i,j,l] for l=1:3))
+end
+
 # Minimalizujemy całkowitą liczbę radiowozów
 @objective(m, Min, sum(x))
 
