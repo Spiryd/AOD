@@ -6,7 +6,7 @@ using JuMP
 using HiGHS
 
 #zasięg widzenia kamer
-k = 2
+k = 1
 #rozsatwienie kontenerów na placu
 c = [
     0 1 0 0 0
