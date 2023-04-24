@@ -66,7 +66,6 @@ impl Graph {
         distances[src] = Some(0);
         let mut heap = BinaryHeap::new();
         heap.push((0, src));
-
         while let Some((distance, node)) = heap.pop() {
             if let Some(current_distance) = distances[node] {
                 if distance > current_distance {
@@ -87,56 +86,34 @@ impl Graph {
         let mut distances = vec![None; self.node_quantity];
         let mut buckets = Vec::new();
         let mut min_bucket = 0;
-
-        // Initialize buckets
-        for i in 0..self.node_quantity {
+        for i in 0..(2 * self.node_quantity) {
             buckets.push(HashSet::new());
         }
-
-        // Initialize distance of the source node
         distances[start] = Some(0);
-
-        // Add source node to bucket 0
         buckets[0].insert(start);
-
-        // While there are non-empty buckets
         while min_bucket < buckets.len() {
-            // Get the non-empty bucket with the smallest index
             let current_bucket = &mut buckets[min_bucket];
-
-            // If the current bucket is empty, move on to the next bucket
             if current_bucket.is_empty() {
                 min_bucket += 1;
                 continue;
             }
-
-            // Get the node with the smallest distance in the current bucket
             let node = *current_bucket.iter().next().unwrap();
             current_bucket.remove(&node);
-
-            // If the node is the destination node, return its distance
             if node == goal {
                 return distances[goal];
             }
-
-            // Update the distances to the neighbors of the current node
             for (neighbor, weight) in self.adj.get(&node).unwrap_or(&HashSet::new()).iter() {
-                let bucket_index = (distances[node].unwrap_or(0) + weight) as usize;
+                let bucket_index = distances[node].unwrap_or(0) + weight;
                 if distances[*neighbor].map_or(true, |d| bucket_index < d) {
-                    // Move the neighbor to the new bucket
                     let old_bucket_index = distances[*neighbor].unwrap_or(usize::MAX);
                     if old_bucket_index < buckets.len() {
                         buckets[old_bucket_index].remove(neighbor);
                     }
                     buckets[bucket_index].insert(*neighbor);
-
-                    // Update the distance to the neighbor
                     distances[*neighbor] = Some(bucket_index);
                 }
             }
         }
-
-        // The destination node was not reachable from the source node
         None
     }
     pub fn dial_ss(&mut self, src: usize,)  -> Vec<Option<usize>> {
@@ -168,10 +145,10 @@ impl Graph {
         }
         distances
     }
-    pub fn radix_p2p(&mut self, start: usize, goal: usize) -> Option<Vec<usize>> {
+    pub fn radix_p2p(&mut self, start: usize, goal: usize) -> Option<usize> {
         todo!()
     }
-    pub fn radix_ss(&mut self, src: usize,) -> Option<Vec<usize>> {
+    pub fn radix_ss(&mut self, src: usize,) -> Vec<Option<usize>> {
         todo!()
     }
 }
