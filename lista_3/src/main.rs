@@ -9,4 +9,7 @@ fn main() {
     graph.add_edge(2, 0, 1);
     println!("{:?}", graph);
     println!("{:?}", graph.djikstra_classic_ss(0));
+    println!("{:?}", graph.djikstra_classic_p2p(0, 2));
+    println!("{:?}", graph.dial_ss(0));
+    println!("{:?}", graph.dial_p2p(0, 2));
 }
