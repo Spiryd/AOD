@@ -8,5 +8,5 @@ fn main() {
     graph.add_edge(1, 2, 2);
     graph.add_edge(2, 0, 1);
     println!("{:?}", graph);
-    println!("{:?}", graph.djikstra_classic(0, 2));
+    println!("{:?}", graph.djikstra_classic_ss(0));
 }
