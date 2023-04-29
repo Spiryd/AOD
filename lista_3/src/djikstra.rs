@@ -1,12 +1,6 @@
-use std::collections::{HashMap, BinaryHeap, HashSet, VecDeque};
+use std::collections::{HashMap, BinaryHeap, HashSet};
 use std::cmp::Ordering;
-
-#[derive(Clone, Debug)]
-pub struct Graph{
-    node_quantity: usize,
-    adj: HashMap<usize, HashSet<(usize, usize)>>
-}
-
+use std::cmp::Reverse;
 
 #[derive(Clone, Eq, Hash, PartialEq, Debug)]
 pub struct SearchNode{
@@ -26,14 +20,23 @@ impl PartialOrd for SearchNode {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct Graph{
+    node_quantity: usize,
+    max_weight: usize,
+    adj: HashMap<usize, HashSet<(usize, usize)>>
+}
+
 impl Graph {
-    pub fn new() -> Self{
-        let node_quantity = 0;
+    pub fn new(node_quantity: usize, max_weight: usize) -> Self{
         let adj: HashMap<usize, HashSet<(usize, usize)>> = HashMap::new();
-        Self{ node_quantity, adj }
+        Graph {
+            node_quantity,
+            max_weight,
+            adj 
+        }
     }
     pub fn add_edge(&mut self, from: usize, to: usize, cost: usize) {
-        self.node_quantity += 1;
         self.adj.entry(from).or_insert(HashSet::new()).insert((to, cost));
     }
     pub fn djikstra_classic_p2p(&mut self, start: usize, goal: usize) -> Option<usize> {
@@ -43,16 +46,15 @@ impl Graph {
         let mut queue: BinaryHeap<SearchNode> = BinaryHeap::new();
         let mut visited: HashSet<usize> = HashSet::new();
         visited.insert(start);
-        let start_node = SearchNode{id: start, distance: 0};
         for (id, distance) in self.adj.get(&start).unwrap() {
-            queue.push(SearchNode{id: *id, distance: *distance,});
+            queue.push(SearchNode{id: *id, distance: *distance});
         }
         while let Some(current_node) = queue.pop() {
             visited.insert(current_node.id);
             if current_node.id == goal{
                 return Some(current_node.distance);
             }
-            let d = current_node.distance.clone();
+            let d = current_node.distance;
             for (id, dist) in self.adj.get(&current_node.id).unwrap() {
                 if !visited.contains(id){
                     queue.push(SearchNode { id: *id, distance: (dist + d)});
@@ -84,65 +86,64 @@ impl Graph {
     }
     pub fn dial_p2p(&mut self, start: usize, goal: usize) -> Option<usize> {
         let mut distances = vec![None; self.node_quantity];
-        let mut buckets = Vec::new();
-        let mut min_bucket = 0;
-        for i in 0..(2 * self.node_quantity) {
-            buckets.push(HashSet::new());
-        }
+        let max_buckets = self.node_quantity * self.max_weight;
+        let mut buckets: Vec<HashSet<usize>> = vec![HashSet::new(); max_buckets];
         distances[start] = Some(0);
         buckets[0].insert(start);
-        while min_bucket < buckets.len() {
-            let current_bucket = &mut buckets[min_bucket];
-            if current_bucket.is_empty() {
-                min_bucket += 1;
-                continue;
-            }
-            let node = *current_bucket.iter().next().unwrap();
-            current_bucket.remove(&node);
+        let mut heap = BinaryHeap::new();
+        heap.push((Reverse(0), start));
+        while let Some((Reverse(dist), node)) = heap.pop() {
             if node == goal {
-                return distances[goal];
+                return Some(dist);
             }
-            for (neighbor, weight) in self.adj.get(&node).unwrap_or(&HashSet::new()).iter() {
-                let bucket_index = distances[node].unwrap_or(0) + weight;
-                if distances[*neighbor].map_or(true, |d| bucket_index < d) {
-                    let old_bucket_index = distances[*neighbor].unwrap_or(usize::MAX);
-                    if old_bucket_index < buckets.len() {
-                        buckets[old_bucket_index].remove(neighbor);
-                    }
-                    buckets[bucket_index].insert(*neighbor);
-                    distances[*neighbor] = Some(bucket_index);
+            if let Some(d) = distances.get(node).and_then(|d| *d) {
+                if dist > d {
+                    continue;
                 }
+            }
+            buckets[dist].remove(&node);
+            distances[node] = Some(dist);
+            for (neighbor, weight) in self.adj.get(&node).unwrap() {
+                let new_dist = dist + *weight;
+                if let Some(d) = distances.get(*neighbor).and_then(|d| *d) {
+                    if new_dist >= d {
+                        continue;
+                    }
+                }
+                buckets[new_dist].insert(*neighbor);
+                heap.push((Reverse(new_dist), *neighbor));
             }
         }
         None
     }
     pub fn dial_ss(&mut self, src: usize,)  -> Vec<Option<usize>> {
         let mut distances = vec![None; self.node_quantity];
+        let max_buckets = self.node_quantity * self.max_weight;
+        let mut buckets: Vec<HashSet<usize>> = vec![HashSet::new(); max_buckets];
         distances[src] = Some(0);
-        let mut buckets = vec![HashSet::new(); self.node_quantity];
         buckets[0].insert(src);
-        let mut max_bucket_index = 0;
-
-        while let Some(&node) = buckets[max_bucket_index].iter().next() {
-            buckets[max_bucket_index].remove(&node);
-            for (neighbor, weight) in self.adj.get(&node).unwrap_or(&HashSet::new()) {
-                let new_distance = distances[node].unwrap() + weight;
-                if distances[*neighbor].map_or(true, |d| new_distance < d) {
-                    distances[*neighbor] = Some(new_distance);
-                    let new_bucket_index = new_distance as usize;
-                    if new_bucket_index >= buckets.len() {
-                        buckets.resize(new_bucket_index + 1, HashSet::new());
+        let mut bucket_idx: usize = 0;
+        loop {
+            while bucket_idx < max_buckets && buckets[bucket_idx].is_empty() {
+                bucket_idx += 1;
+            }
+            if bucket_idx >= max_buckets {
+               break; 
+            }
+            let v = *buckets[bucket_idx].iter().next().unwrap();
+            buckets[bucket_idx].remove(&v);
+            for (u, w) in self.adj.get(&v).unwrap_or(&HashSet::new()){
+                let alt_dist = distances[v].unwrap_or(usize::MAX) + w;
+                let curr_dist = distances[*u].unwrap_or(usize::MAX);
+                if alt_dist < curr_dist {
+                    if curr_dist != usize::MAX {
+                        buckets[alt_dist].remove(u);
                     }
-                    if new_bucket_index > max_bucket_index {
-                        max_bucket_index = new_bucket_index;
-                    }
-                    buckets[new_bucket_index].insert(*neighbor);
+                    buckets[alt_dist].insert(*u);
+                    distances[*u] = Some(alt_dist);
                 }
             }
-            if buckets[max_bucket_index].is_empty() {
-                max_bucket_index -= 1;
-            }
-        }
+        }        
         distances
     }
     pub fn radix_p2p(&mut self, start: usize, goal: usize) -> Option<usize> {

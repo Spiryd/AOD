@@ -2,3 +2,4 @@ _.*
 **/target/
 **/test_data/
 lista_1/target/.rustc_info.json
+*.lock
