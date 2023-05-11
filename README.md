@@ -1,9 +1,6 @@
 # AOD
----
 
 AOD course in PWR
-
----
 
 ## Lista 1: Graph representation and implementation
 
