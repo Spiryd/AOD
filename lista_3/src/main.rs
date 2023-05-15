@@ -2,6 +2,7 @@ use std::{io, fs};
 use std::fs::File;
 use std::io::BufRead;
 use std::path::Path;
+use std::thread;
 
 use dialoguer::{console::Term, Input, theme::ColorfulTheme, Select};
 
@@ -70,7 +71,6 @@ fn main() {
     }
     //println!("{:?}", graph_file);
     //println!("{:?}", challenge_file);
-
     let mut g = Graph::default();
     if let Ok(lines) = read_lines(graph_file) {
         for line in lines.flatten() {
@@ -95,9 +95,12 @@ fn main() {
             }
         }
         for p2p in p2ps{
+            let gc = g.clone();
             match algorithm_selection.unwrap() {
                 0 => {
-                    println!("{:?}", g.djikstra_classic_p2p(p2p.0, p2p.1))
+                    thread::spawn(move || {  
+                        println!("{:?}", gc.clone().djikstra_classic_p2p(p2p.clone().0, p2p.clone().1));
+                    });
                 },
                 1 => {
                     println!("{:?}", g.dial_p2p(p2p.0, p2p.1))
