@@ -1,6 +1,14 @@
-use std::collections::{BinaryHeap, HashSet};
+use std::collections::{BinaryHeap, HashSet, VecDeque};
 use std::cmp::Ordering;
 use std::cmp::Reverse;
+use std::usize;
+
+#[derive(Clone, Debug)]
+struct RadixBucket {
+    v_list: VecDeque<usize>,
+    range_a: usize,
+    range_b: usize,
+}
 
 #[derive(Clone, Eq, Hash, PartialEq, Debug)]
 pub struct SearchNode{
@@ -172,6 +180,99 @@ impl Graph {
 
         let mut distances = vec![None; self.node_quantity];
         distances[src] = Some(0);
+        let no_buckets = (usize::MAX as f64).log2() as usize;
+        let mut buckets: Vec<RadixBucket> = vec![RadixBucket {v_list: VecDeque::new(), range_a: 0, range_b: 0}; no_buckets];
+    
+        for i in 0..no_buckets {
+            buckets[i].range_a = 2_usize.pow((i - 1) as u32);
+            buckets[i].range_b = 2_usize.pow(i as u32) - 1;
+        }
+        buckets[0].v_list.push_front(src);
+        
+        let mut idx: usize;
+        loop {
+            idx = 0;
+
+            while idx < buckets.len() && buckets[idx].v_list.len() == 0  {
+                idx += 1;
+            }
+            if idx == buckets.len() {
+                break;
+            }
+            let mut u = *buckets[idx].v_list.front().unwrap();
+
+            // Only remove front element if bucket width == 1
+            if buckets[idx].range_b - buckets[idx].range_a + 1 == 1 {
+                buckets[idx].v_list.pop_front();
+            } else {
+                let mut minv: usize = 0;
+                let mut mindist = usize::MAX;
+                //find the smallest element
+                for &v in &buckets[idx].v_list {
+                    if distances[v].unwrap() < mindist {
+                        mindist = distances[v].unwrap();
+                        minv = v;
+                    }
+                }
+                u = minv;
+                for (i, &elem) in buckets[idx].v_list.iter().enumerate() {
+                    if elem == minv {
+                        buckets[idx].v_list.remove(i);
+                        break;
+                    }
+                }
+                //distribute the range of buckets
+                for i in 0..idx {
+                    buckets[i].range_a = mindist + 2_usize.pow((i - 1) as u32);
+                    buckets[i].range_b = mindist + 2_usize.pow(i as u32) - 1;
+                }
+                buckets[idx -1].range_b = buckets[idx].range_b;
+                //determine the correct buckets
+                for &v in &buckets[idx].v_list.clone() {
+                    for i in (0..idx).rev() {
+                        if let Some(dist_v) = distances[v] {
+                            if dist_v >= buckets[i].range_a && dist_v <= buckets[i].range_b {
+                                buckets[i].v_list.push_front(v);
+                                break;
+                            }
+                        }
+                    }
+                }
+                // mark bucket as empty
+                buckets[idx].range_a = 1;
+                buckets[idx].range_b = 0;
+                buckets[idx].v_list.clear();
+            }
+
+            for &(v, weight) in &self.adj[u] {
+                if let Some(dv) = distances[v] {
+                    let du = distances[u].unwrap();
+            
+                    if dv > du + weight {
+                        if dv != usize::MAX {
+                            let mut tmp = 0;
+                            while !(buckets[tmp].range_a <= dv && buckets[tmp].range_b >= dv) {
+                                tmp += 1;
+                            }
+            
+                            if let Some(j) = buckets[tmp].v_list.iter().position(|&x| x == v) {
+                                buckets[tmp].v_list.remove(j);
+                            }
+                        }
+            
+                        let mut b = 0;
+                        while !(buckets[b].range_a <= du + weight && buckets[b].range_b >= du + weight) {
+                            b += 1;
+                        }
+            
+                        distances[v] = Some(du + weight);
+                        buckets[b].v_list.push_front(v);
+                    }
+                }
+            }
+            
+        }
+
         distances
     }
 }

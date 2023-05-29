@@ -99,7 +99,7 @@ fn main() {
             match algorithm_selection.unwrap() {
                 0 => {
                     thread::spawn(move || {  
-                        println!("{:?}", gc.clone().djikstra_classic_p2p(p2p.clone().0, p2p.clone().1));
+                        println!("{:?}", gc.clone().djikstra_classic_p2p(p2p.0, p2p.1));
                     });
                 },
                 1 => {
