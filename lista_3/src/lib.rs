@@ -205,7 +205,7 @@ impl Graph {
                 buckets[idx].v_list.pop_front();
             } else {
                 let mut minv: usize = 0;
-                let mut mindist = usize::MAX;
+                let mindist = usize::MAX;
                 for v in buckets[idx].v_list.clone() {
                     if distances[v] < mindist {
                         minv = v;
@@ -238,8 +238,34 @@ impl Graph {
                 buckets[idx].v_list.clear();              
             }
 
+            for i in &self.adj[u] {
+                let v = i.0;
+                let weight = i.0;
+                let dv  = distances[v];
+                let du  = distances[u];
+
+                if dv > du + weight {
+                    if dv != usize::MAX {
+                        let mut tmp = 0;
+                        while !(buckets[tmp].range_a <= dv && buckets[tmp].range_b >= dv){
+                            tmp += 1;
+                        }
+                        for (i, j) in buckets[tmp].v_list.iter().enumerate() {
+                            if *j == v {
+                                buckets[tmp].v_list.remove(i);
+                                break;
+                            }
+                        }
+                    }
+                    let mut b = 0;
+                    while !(buckets[b].range_a <= du + weight && buckets[b].range_b >= du + weight) {
+                        b += 1;
+                    }
+                    distances[v] = du + weight;
+                    buckets[b].v_list.push_front(v);    
+                }
+            }    
         }
-        
         distances
     }
 }
