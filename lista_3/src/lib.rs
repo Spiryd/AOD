@@ -1,6 +1,5 @@
 use std::collections::{BinaryHeap, HashSet, VecDeque};
 use std::cmp::Ordering;
-use std::cmp::Reverse;
 use std::usize;
 
 #[derive(Clone, Debug)]
@@ -8,6 +7,22 @@ struct RadixBucket {
     v_list: VecDeque<usize>,
     range_a: usize,
     range_b: usize,
+}
+
+impl RadixBucket {
+    fn generate_sequence(n: u32) -> Vec<(usize, usize)> {
+        let mut sequence = Vec::new();
+        let mut prev_value = 0;
+    
+        for i in 0..n {
+            let current_value = 2usize.pow(i);
+            let current_tuple = (prev_value, current_value - 1);
+            sequence.push(current_tuple);
+            prev_value = current_value;
+        }
+        sequence
+    }
+
 }
 
 #[derive(Clone, Eq, Hash, PartialEq, Debug)]
@@ -100,39 +115,11 @@ impl Graph {
         distances
     }
     pub fn dial_p2p(&mut self, start: usize, goal: usize) -> Option<usize> {
-        let start = start - 1;
-        let goal = goal - 1;
-
-        let mut distances = vec![None; self.node_quantity];
-        let max_buckets = self.node_quantity * self.max_weight;
-        let mut buckets: Vec<Vec<usize>> = vec![Vec::new(); max_buckets];
-        distances[start] = Some(0);
-        buckets[0].push(start);
-        let mut heap = BinaryHeap::new();
-        heap.push((Reverse(0), start));
-        while let Some((Reverse(dist), node)) = heap.pop() {
-            if node == goal {
-                return Some(dist);
-            }
-            if let Some(d) = distances.get(node).and_then(|d| *d) {
-                if dist > d {
-                    continue;
-                }
-            }
-            buckets[dist].retain(|v| *v != node);
-            distances[node] = Some(dist);
-            for (neighbor, weight) in &self.adj[node] {
-                let new_dist = dist + weight;
-                if let Some(d) = distances.get(*neighbor).and_then(|d| *d) {
-                    if new_dist >= d {
-                        continue;
-                    }
-                }
-                buckets[new_dist].push(*neighbor);
-                heap.push((Reverse(new_dist), *neighbor));
-            }
+        if start == goal{
+            return Some(0);
         }
-        None
+        let goal = goal - 1;
+        self.dial_ss(start)[goal]
     }
     pub fn dial_ss(&mut self, src: usize)  -> Vec<Option<usize>> {
         let src = src - 1;
@@ -167,91 +154,85 @@ impl Graph {
         distances
     }
     pub fn radix_p2p(&mut self, start: usize, goal: usize) -> Option<usize> {
-        let start = start - 1;
-        let goal = goal - 1;
-
         if start == goal{
             return Some(0);
         }
-        Some(13)
+        let goal = goal - 1;
+        self.radix_ss(start)[goal]
     }
-    pub fn radix_ss(&mut self, src: usize,) -> Vec<usize> {
+    pub fn radix_ss(&self, src: usize) -> Vec<Option<usize>> {
         let src = src - 1;
+        let mut dist: Vec<Option<usize>> = vec![None; self.node_quantity];
+        dist[src] = Some(0);
 
-        let mut distances = vec![usize::MAX; self.node_quantity];
-        distances[src] = 0;
-        let no_buckets = (usize::MAX as f64).log2() as usize;
-        let mut buckets: Vec<RadixBucket> = vec![RadixBucket {v_list: VecDeque::new(), range_a: 0, range_b: 0}; no_buckets];
-    
-        for i in 0..no_buckets {
-            buckets[i].range_a = 2_usize.pow((i - 1) as u32);
-            buckets[i].range_b = 2_usize.pow(i as u32) - 1;
+        let no_buckets = (((self.max_weight * self.node_quantity) as f64).log2().ceil() + 1_f64) as usize;
+        let mut buckets: Vec<RadixBucket> = Vec::with_capacity(no_buckets as usize);
+        let bucket_seq = RadixBucket::generate_sequence(no_buckets as u32);
+        //println!("{:?}", bucket_seq);
+        for rang in bucket_seq {
+            buckets.push(RadixBucket { v_list: VecDeque::new(), range_a: rang.0, range_b: rang.1 })
         }
+        //println!("{:?}", buckets);
         buckets[0].v_list.push_front(src);
         
-        let mut idx: usize;
-
+        let mut idx;
         loop {
+            //choosing the node
             idx = 0;
-            while buckets[idx].v_list.len() == 0 && idx < buckets.len() {
+            while idx < buckets.len() && buckets[idx].v_list.len() == 0 {
                 idx += 1;
             }
-            if idx == buckets.len() {
+            if idx == buckets.len(){
                 break;
             }
-            let mut u = *buckets[idx].v_list.front().unwrap();
 
-            if buckets[idx].range_b - buckets[idx].range_a + 1 == 1 {
-                buckets[idx].v_list.pop_front();
+            let mut u = *buckets[idx].v_list.front().unwrap();
+            //ckecking if is alone in bucket
+            if buckets[idx].v_list.len() == 1 {
+                buckets[idx].v_list.clear();
             } else {
-                let mut minv: usize = 0;
-                let mindist = usize::MAX;
-                for v in buckets[idx].v_list.clone() {
-                    if distances[v] < mindist {
-                        minv = v;
+                let mut minv = 0;
+                let mut mindist = usize::MAX;
+
+                for v in &buckets[idx].v_list {
+                    if  dist[*v].unwrap_or(usize::MAX) < mindist {
+                        mindist = dist[*v].unwrap_or(usize::MAX);
+                        minv = *v;
                     }
                 }
                 u = minv;
-                for (i, v) in buckets[idx].v_list.iter().enumerate() {
-                    if *v < u {
-                        buckets[idx].v_list.remove(i);
-                        break;
-                    }
-                }
-
+                //resize
+                let r = RadixBucket::generate_sequence(idx as u32);
                 for i in 0..idx {
-                    buckets[i].range_a = 2_usize.pow((i - 1) as u32);
-                    buckets[i].range_b = 2_usize.pow(i as u32) - 1;
+                    buckets[i].range_a = r[i].0 + mindist;
+                    buckets[i].range_b = r[i].1 + mindist;
                 }
-                buckets[idx -1].range_b = buckets[idx].range_b;
-
+                //repopulate
                 for v in buckets[idx].v_list.clone() {
-                    for i in (0..=(idx - 1)).rev() {
-                        if distances[v] >= buckets[i].range_a && distances[v] <= buckets[i].range_b {
+                    for i in 0..idx {
+                        if dist[v].unwrap() >= buckets[i].range_a && dist[v].unwrap() <= buckets[i].range_b {
                             buckets[i].v_list.push_front(v);
                             break;
                         }
                     }
                 }
-                buckets[idx].range_a = 1;
+
+                buckets[idx].range_a = 0;
                 buckets[idx].range_b = 0;
-                buckets[idx].v_list.clear();              
+                buckets[idx].v_list.clear();
             }
 
-            for i in &self.adj[u] {
-                let v = i.0;
-                let weight = i.0;
-                let dv  = distances[v];
-                let du  = distances[u];
-
+            for (v, weight) in &self.adj[u] {
+                let dv = dist[*v].unwrap_or(usize::MAX);
+                let du = dist[u].unwrap_or_default();
                 if dv > du + weight {
                     if dv != usize::MAX {
                         let mut tmp = 0;
-                        while !(buckets[tmp].range_a <= dv && buckets[tmp].range_b >= dv){
+                        while !(buckets[tmp].range_a <= dv && buckets[tmp].range_b >= dv) {
                             tmp += 1;
                         }
                         for (i, j) in buckets[tmp].v_list.iter().enumerate() {
-                            if *j == v {
+                            if j == v {
                                 buckets[tmp].v_list.remove(i);
                                 break;
                             }
@@ -261,12 +242,13 @@ impl Graph {
                     while !(buckets[b].range_a <= du + weight && buckets[b].range_b >= du + weight) {
                         b += 1;
                     }
-                    distances[v] = du + weight;
-                    buckets[b].v_list.push_front(v);    
+                    dist[*v] = Some(du + weight);
+                    buckets[b].v_list.push_front(*v);
                 }
-            }    
+            }
+            //break;
         }
-        distances
+        dist
     }
 }
 
