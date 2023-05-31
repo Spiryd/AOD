@@ -207,6 +207,9 @@ impl Graph {
                     buckets[i].range_a = r[i].0 + mindist;
                     buckets[i].range_b = r[i].1 + mindist;
                 }
+                if idx != 0 {
+                    buckets[idx -1].range_b = buckets[idx].range_b;
+                }
                 //repopulate
                 for v in buckets[idx].v_list.clone() {
                     for i in 0..idx {
@@ -217,14 +220,14 @@ impl Graph {
                     }
                 }
 
-                buckets[idx].range_a = 0;
-                buckets[idx].range_b = 0;
+                buckets[idx].range_a = usize::MAX;
+                buckets[idx].range_b = usize::MAX;
                 buckets[idx].v_list.clear();
             }
 
             for (v, weight) in &self.adj[u] {
                 let dv = dist[*v].unwrap_or(usize::MAX);
-                let du = dist[u].unwrap_or_default();
+                let du = dist[u].unwrap();
                 if dv > du + weight {
                     if dv != usize::MAX {
                         let mut tmp = 0;
@@ -239,14 +242,16 @@ impl Graph {
                         }
                     }
                     let mut b = 0;
+                    //println!("{}", du + weight);
                     while !(buckets[b].range_a <= du + weight && buckets[b].range_b >= du + weight) {
+                        //println!("{}, {}", buckets[b].range_a, buckets[b].range_b);
                         b += 1;
                     }
                     dist[*v] = Some(du + weight);
                     buckets[b].v_list.push_front(*v);
                 }
             }
-            //break;
+            //println!("{:?}", dist); 
         }
         dist
     }
