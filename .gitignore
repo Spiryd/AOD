@@ -3,3 +3,5 @@
 **/test_data/
 lista_1/target/.rustc_info.json
 *.lock
+lista_1/target/.rustc_info.json
+lista_3/.vscode/settings.json
