@@ -201,11 +201,15 @@ impl Graph {
                     }
                 }
                 u = minv;
+                
+                println!("{minv}");
+                println!("{idx}");
                 //resize
                 let r = RadixBucket::generate_sequence(idx as u32);
                 for i in 0..idx {
                     buckets[i].range_a = r[i].0 + mindist;
                     buckets[i].range_b = r[i].1 + mindist;
+                    println!()
                 }
                 if idx != 0 {
                     buckets[idx -1].range_b = buckets[idx].range_b;
@@ -219,9 +223,8 @@ impl Graph {
                         }
                     }
                 }
-
-                buckets[idx].range_a = usize::MAX;
-                buckets[idx].range_b = usize::MAX;
+                buckets[idx].range_a = 0;
+                buckets[idx].range_b = 0;
                 buckets[idx].v_list.clear();
             }
 
@@ -243,7 +246,7 @@ impl Graph {
                     }
                     let mut b = 0;
                     //println!("{}", du + weight);
-                    while !(buckets[b].range_a <= du + weight && buckets[b].range_b >= du + weight) {
+                    while b < buckets.len() && !(buckets[b].range_a <= du + weight && buckets[b].range_b >= du + weight) {
                         //println!("{}, {}", buckets[b].range_a, buckets[b].range_b);
                         b += 1;
                     }
