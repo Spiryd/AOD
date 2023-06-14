@@ -2,5 +2,6 @@
 use lib::*;
 
 fn main() {
-    println!("Hello, world!");
+    let hyper_cube = Network::new_hypercube(2);
+    println!("{:?}", hyper_cube);
 }
