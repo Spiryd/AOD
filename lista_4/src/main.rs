@@ -32,15 +32,15 @@ fn main() {
 
 fn collect_edmonds_karp_data() {
     let mut file = File::create("./data/edmonds_karp.csv").unwrap();
-    file.write_all(b"n;flow;time\n").unwrap();
+    file.write_all(b"n;flow;time;aug_count\n").unwrap();
     for n in 1..=16 {
-        let hyper_cube = Hypercube::new(n);
-        println!("{n}-dimensional Hypercube created");
-        for _ in 0..10 {
+        for _ in 0..100 {
+            let mut hyper_cube = Hypercube::new(n);
+            println!("{n}-dimensional Hypercube created");
             let start = Instant::now();
-            let max_flow = hyper_cube.edmonds_karp(0,  2_usize.pow(n) - 1);
-            let duration =  start.elapsed().as_secs_f64();
-            file.write_all(format!("{n};{max_flow};{duration}\n").as_bytes()).unwrap();
+            let (max_flow, aug_count) = hyper_cube.edmonds_karp(0,  2_usize.pow(n) - 1);
+            let duration =  start.elapsed().as_nanos();
+            file.write_all(format!("{n};{max_flow};{duration};{aug_count}\n").as_bytes()).unwrap();
         }
     }
 }
@@ -50,14 +50,28 @@ fn collect_mcm_data() {
     file.write_all(b"k;i;size;time\n").unwrap();
     for k in 3..=10 {
         for i in 1..=k {
-            let bigraph = Bigraph::new(k, i as usize);
-            for _ in 0..100{
-                println!("{:?}", bigraph.hopcroft_karp());
+            for _ in 0..1000{
+                let bigraph = Bigraph::new(k, i as usize);
+                let start = Instant::now();
+                let size = bigraph.hopcroft_karp();
+                let duration =  start.elapsed().as_nanos();
+                file.write_all(format!("{k};{i};{size};{duration}\n").as_bytes()).unwrap();
             }
         }
     }
 }
 
 fn collect_dinic_data() {
-    todo!()
+    let mut file = File::create("./data/dinic.csv").unwrap();
+    file.write_all(b"n;flow;time;aug_count\n").unwrap();
+    for n in 1..=16 {
+        for _ in 0..100 {
+            let mut hyper_cube = Hypercube::new(n);
+            println!("{n}-dimensional Hypercube created");
+            let start = Instant::now();
+            let (max_flow, aug_count) = hyper_cube.dinic(0,  2_usize.pow(n) - 1);
+            let duration =  start.elapsed().as_nanos();
+            file.write_all(format!("{n};{max_flow};{duration};{aug_count}\n").as_bytes()).unwrap();
+        }
+    }
 }

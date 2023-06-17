@@ -83,66 +83,183 @@ impl Bigraph {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct Edge {
+    to: usize,
+    flow: isize,
+    residual_capacity: isize
+}
+
 #[derive(Debug, Clone)]
 pub struct Hypercube {
     pub node_quantity: usize,
-    //adj: Vec<Vec<u8>>,
-    cap: Vec<Vec<isize>>
+    adj: Vec<Vec<Edge>>
 }
 
 impl Hypercube {
     pub fn new(n: u32) -> Self {
         let mut rng: Pcg64 = Pcg64::from_entropy();
         let node_quantity= 2_usize.pow(n);
-        let mut adj: Vec<Vec<u8>> = vec![vec![0; node_quantity]; node_quantity];
-        let mut cap: Vec<Vec<isize>> = vec![vec![0; node_quantity]; node_quantity];
+        let mut adj: Vec<Vec<Edge>> = vec![Vec::new(); node_quantity];
         for v in 0..node_quantity {
             for u in 0..node_quantity {
                 if v < u && hamming_distance(v, u) == 1 {
-                    adj[v][u] = 1;
                     let l = *vec![hamming_weight(v), hamming_weight(u), rev_hamming_weight(v, n), rev_hamming_weight(u, n)]
                     .iter()
                     .max()
                     .unwrap();
-                    cap[v][u] = rng.gen_range(1..(2_isize.pow(l)));
+                    let cap = rng.gen_range(1..(2_isize.pow(l)));
+                    adj[v].push(Edge { to: u, flow: 0, residual_capacity: cap });
+                    adj[u].push(Edge { to: v, flow: 0, residual_capacity: 0 });
                 }
             }
         }
-        Hypercube { node_quantity, cap }
+        Hypercube { node_quantity, adj }
     }
 
-    pub fn edmonds_karp(&self, source: usize, sink: usize) -> isize {
-        let node_quantity = self.node_quantity;
-        let mut resid: Vec<Vec<isize>> = self.cap.clone();
-        let mut parent: Vec<isize> = vec![0; node_quantity];
-        let mut maxflow: isize = 0;
-    
-        while bfs_for_edmonds_karp(source, sink, &mut parent, &mut resid) {
-            let mut path_flow = isize::MAX;
-            let mut v = sink;
-            while v != source {
-                let u = parent[v];
-                path_flow = path_flow.min(resid[u as usize][v as usize]);
-                v = u as usize;
+    pub fn to_jump(&self) {
+        todo!()
+    }
+
+    fn bfs(&self, source: usize, target: usize, parent: &mut Vec<Option<usize>>) -> bool {
+        let mut visited = vec![false; self.node_quantity];
+        let mut queue = Vec::new();
+        queue.push(source);
+        visited[source] = true;
+        parent[source] = None;
+
+        while !queue.is_empty() {
+            let u = queue.remove(0);
+
+            for edge in &self.adj[u]{
+                let v = edge.to;
+                if !visited[v] && edge.residual_capacity > 0 {
+                    queue.push(v);
+                    parent[v] = Some(u);
+                    visited[v] = true;
+                }
             }
-    
-            v = sink;
-    
-            while v != source {
-                let u = parent[v];
-                resid[u as usize][v] -= path_flow;
-                resid[v][u as usize] += path_flow;
-                v = u as usize;
+        }
+
+        visited[target]
+    }
+
+    pub fn edmonds_karp(&mut self, source: usize, target: usize) -> (isize, usize) {
+        let mut parent = vec![None; self.node_quantity];
+        let mut max_flow = 0;
+        let mut augmenting_paths = 0;
+
+        while self.bfs(source, target, &mut parent) {
+            augmenting_paths += 1;
+            let mut path_flow = std::isize::MAX;
+
+            let mut v = target;
+            while let Some(u) = parent[v] {
+                let edge = self.adj[u].iter_mut().find(|e| e.to == v).unwrap();
+                path_flow = path_flow.min(edge.residual_capacity);
+                v = u;
             }
+
+            v = target;
+            while let Some(u) = parent[v] {
+                let edge = self.adj[u].iter_mut().find(|e| e.to == v).unwrap();
+                edge.flow += path_flow;
+                edge.residual_capacity -= path_flow;
+
+                let rev_edge = self.adj[v].iter_mut().find(|e| e.to == u).unwrap();
+                rev_edge.flow -= path_flow;
+                rev_edge.residual_capacity += path_flow;
+
+                v = u;
+            }
+
+            max_flow += path_flow;
+        }
+
+        (max_flow, augmenting_paths)
+    }
+
+
+    fn d_bfs(&self, source: usize, sink: usize, level: &mut Vec<usize>) -> bool {
+        for i in 0..self.node_quantity {
+            level[i] = std::usize::MAX;
+        }
+        level[source] = 0;
     
-            maxflow += path_flow;
+        let mut queue = VecDeque::new();
+        queue.push_back(source);
+        let mut visited_sink = false;
+    
+        while !queue.is_empty() {
+            let u = queue.pop_front().unwrap();
+    
+            for edge in &self.adj[u] {
+                if edge.residual_capacity > 0 && level[edge.to] == std::usize::MAX {
+                    level[edge.to] = level[u] + 1;
+                    queue.push_back(edge.to);
+                    if edge.to == sink {
+                        visited_sink = true;
+                    }
+                }
+            }
         }
     
-        maxflow
+        visited_sink
     }
 
-    pub fn dinic(&self, source: usize, sink: usize) -> isize {
-        todo!()
+    // Uses DFS to find blocking flow.
+    fn dfs(&mut self, u: usize, min_edge: isize, sink: usize, level: &Vec<usize>, start: &mut Vec<usize>) -> isize {
+        if u == sink || min_edge == 0 {
+            return min_edge;
+        }
+
+        while start[u] < self.adj[u].len() {
+            let edge_index = start[u];
+            let edge = self.adj[u][edge_index].clone();  // Clone edge to avoid borrow checker issues
+
+            if level[edge.to] == level[u] + 1 {
+                let flow = self.dfs(edge.to, min_edge.min(edge.residual_capacity), sink, level, start);
+
+                if flow > 0 {
+                    let actual_edge = &mut self.adj[u][edge_index];
+                    actual_edge.flow += flow;
+                    actual_edge.residual_capacity -= flow;
+
+                    let reverse_edge = self.adj[edge.to].iter_mut().find(|e| e.to == u).unwrap();
+                    reverse_edge.flow -= flow;
+                    reverse_edge.residual_capacity += flow;
+
+                    return flow;
+                }
+            }
+
+            start[u] += 1;
+        }
+
+        0
+    }
+
+    pub fn dinic(&mut self, source: usize, sink: usize) -> (isize, usize) {
+        let mut max_flow = 0;
+        let mut level = vec![0; self.node_quantity];
+        let mut start = vec![0; self.node_quantity];
+        let mut num_augmenting_paths = 0;
+
+        while self.d_bfs(source, sink, &mut level) {
+            for i in 0..self.node_quantity {
+                start[i] = 0;
+            }
+
+            let mut flow = self.dfs(source, std::isize::MAX, sink, &level, &mut start);
+
+            while flow != 0 {
+                num_augmenting_paths += 1;
+                max_flow += flow;
+                flow = self.dfs(source, std::isize::MAX, sink, &level, &mut start);
+            }
+        }
+
+        (max_flow, num_augmenting_paths)
     }
 }
 
@@ -175,25 +292,6 @@ fn rev_hamming_weight(x: usize, position: u32) -> u32 {
     count
 }
 
-fn bfs_for_edmonds_karp(source: usize, sink: usize, parent: &mut Vec<isize>, resid: &mut Vec<Vec<isize>>) -> bool{
-    let mut visited = vec![false; resid.len()];
-    let mut queue: VecDeque<usize> = VecDeque::new();
-    queue.push_back(source);
-    visited[source] = true;
-    parent[source] = -1;
-
-    while let Some(u) = queue.pop_front() {
-        for v  in 0..resid.len() {
-            if !visited[v] && resid[u][v] > 0 {
-                queue.push_back(v);
-                parent[v] = u as isize;
-                visited[v] = true;
-            }
-        }
-    }
-    visited[sink]
-}
-
 #[cfg(test)]
 mod tests {
     use crate::*;
@@ -220,8 +318,14 @@ mod tests {
 
     #[test]
     fn edmonds_karp_test(){
-        let n = Hypercube::new(4);
+        let mut n = Hypercube::new(4);
         n.edmonds_karp(0, 15);
+    }
+
+    #[test]
+    fn dinic_test(){
+        let mut n = Hypercube::new(3);
+        n.dinic(0, 7);
     }
 
     #[test]
