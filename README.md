@@ -22,3 +22,9 @@ AOD course in PWR
 * Basic implementation with BinaryHeap
 * Dial's version
 * Radix Heap version
+
+## Lista 4: Max flow and Maximum cardinality matching
+
+* Edmonds–Karp algorithm
+* Dinic's algorithm
+* Hopcroft–Karp algorithm
