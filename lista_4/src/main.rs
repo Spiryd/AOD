@@ -8,7 +8,7 @@ use lib::*;
 fn main() {
     let choices = ["Edmonds-Karp Algorithm", "Maximum Cardinality Matching", "Dinic's Algorithm", "ALL", "to JuMP"];
     let selection = Select::with_theme(&ColorfulTheme::default())
-        .with_prompt("Collect Data On:")
+        .with_prompt("Choose:")
         .items(&choices)
         .default(0)
         .interact_on_opt(&Term::stderr())
@@ -32,8 +32,9 @@ fn main() {
 }
 
 fn to_jump() {
-    let hyper_cube = Hypercube::new(3);
-    hyper_cube.to_jump();
+    let hyper_cube = Hypercube::new(10);
+    let mut file = File::create("./max_flow.jl").unwrap();
+    file.write_all(hyper_cube.to_jump().as_bytes()).unwrap();
 }
 
 fn collect_edmonds_karp_data() {

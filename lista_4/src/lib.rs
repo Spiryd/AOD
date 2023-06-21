@@ -117,8 +117,13 @@ impl Hypercube {
         Hypercube { node_quantity, adj }
     }
 
-    pub fn to_jump(&self) {
+    pub fn to_jump(&self) -> String {
         let mut printable = String::new();
+        printable += "import Pkg\n";
+        printable += "Pkg.add(\"JuMP\")\n";
+        printable += "Pkg.add(\"HiGHS\")\n";
+        printable += "using JuMP
+using HiGHS\n";
         let mut matrix = vec![vec![0; self.node_quantity]; self.node_quantity];
         for (v, edges) in self.adj.iter().enumerate() {
             for edge in edges {
@@ -145,7 +150,7 @@ max_flow = Model(HiGHS.Optimizer)\n
 @objective(max_flow, Max, sum(f[1, :]))\n
 optimize!(max_flow)\n
 objective_value(max_flow)\n";
-        println!("{}", printable);
+        printable
     }
 
     fn bfs(&self, source: usize, target: usize, parent: &mut Vec<Option<usize>>) -> bool {

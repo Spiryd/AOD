@@ -5,3 +5,4 @@ lista_1/target/.rustc_info.json
 *.lock
 *.csv
 **/.vscode
+lista_4/max_flow.jl
