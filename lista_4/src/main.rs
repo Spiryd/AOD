@@ -6,7 +6,7 @@ use std::io::Write;
 use lib::*;
 
 fn main() {
-    let choices = ["Edmonds-Karp Algorithm", "Maximum Cardinality Matching", "Dinic's Algorithm", "ALL"];
+    let choices = ["Edmonds-Karp Algorithm", "Maximum Cardinality Matching", "Dinic's Algorithm", "ALL", "to JuMP"];
     let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Collect Data On:")
         .items(&choices)
@@ -26,8 +26,14 @@ fn main() {
             collect_mcm_data();
             collect_dinic_data();
         },
+        4 => to_jump(),
         _ => panic!("somthing went wrong"),
     }   
+}
+
+fn to_jump() {
+    let hyper_cube = Hypercube::new(3);
+    hyper_cube.to_jump();
 }
 
 fn collect_edmonds_karp_data() {

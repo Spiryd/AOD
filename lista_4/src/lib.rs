@@ -118,7 +118,34 @@ impl Hypercube {
     }
 
     pub fn to_jump(&self) {
-        todo!()
+        let mut printable = String::new();
+        let mut matrix = vec![vec![0; self.node_quantity]; self.node_quantity];
+        for (v, edges) in self.adj.iter().enumerate() {
+            for edge in edges {
+                matrix[v][edge.to] = edge.residual_capacity;
+            }
+        }
+        printable += "G = [\n";
+        for v in matrix {
+            printable += "  ";
+            for u in v {
+                printable += &u.to_string();
+                printable += " ";
+            }
+            printable += "\n";
+        }
+        printable += "]\n";
+        printable += "n = size(G)[1]\n
+max_flow = Model(HiGHS.Optimizer)\n
+@variable(max_flow, f[1:n, 1:n] >= 0)\n
+# Capacity constraints\n
+@constraint(max_flow, [i = 1:n, j = 1:n], f[i, j] <= G[i, j])\n";
+        printable += &format!("@constraint(max_flow, [i = 1:n; i != 1 && i != {}], sum(f[i, :]) == sum(f[:, i]))\n", self.node_quantity);
+        printable += "# Flow conservation constraints\n
+@objective(max_flow, Max, sum(f[1, :]))\n
+optimize!(max_flow)\n
+objective_value(max_flow)\n";
+        println!("{}", printable);
     }
 
     fn bfs(&self, source: usize, target: usize, parent: &mut Vec<Option<usize>>) -> bool {
